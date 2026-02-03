@@ -1,0 +1,6 @@
+/bin/
+/profmate-runs/
+/.env
+*.test
+coverage.out
+.DS_Store
