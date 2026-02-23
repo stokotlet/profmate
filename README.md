@@ -1,10 +1,163 @@
 # ProfMate
 
-Collects a pprof target and prints where CPU and memory went.
+Утилита для pprof в терминале. Снимает cpu, heap, горутины, block и mutex, цифры считает сама. Модель, если подключена, только объясняет уже посчитанное. Без модели остаются отчёт и короткие ответы на обычные вопросы.
+
+## Запуск
+
+Go 1.24 или новее. При первой сборке подтянется `github.com/google/pprof`.
 
 ```sh
 go build -o bin/profmate ./cmd/profmate
-bin/profmate inspect http://localhost:6060 --duration 30s
 ```
 
-Go 1.24+. Works offline when PROFMATE_MODEL is unset.
+Демо в отдельном терминале:
+
+```sh
+go run ./cmd/demo
+```
+
+Приложение слушает `127.0.0.1:8080`, pprof — `127.0.0.1:6060`. Есть `GET /healthz` и `GET /search?q=go`. В поиске специально кривые места: regexp на каждый запрос, лишние строки, очередь воркеров и долгий mutex. Память ограничена кольцом на 2 MiB. Block/mutex sampling включается внутри демо, по HTTP его не включить.
+
+Нагрузка, пока демо работает:
+
+```sh
+go run ./cmd/load -duration 45s
+```
+
+И в третьем терминале:
+
+```sh
+bin/profmate inspect http://localhost:6060 --duration 30s --offline \
+  --goal 'Поиск тормозит под нагрузкой'
+```
+
+Порядок такой: снимки до, CPU на заданное окно, снимки после. Потом обзор и строка `profmate>`. Нагрузка должна идти всё это время. Если между командами была пауза, увеличь `-duration` у load.
+
+```text
+profmate> Что означает flat и cum?
+profmate> /top
+profmate> /profiles
+profmate> /help profiling
+profmate> /exit
+```
+
+`Ctrl+C` останавливает демо или нагрузку.
+
+## Модель
+
+Нужна уже запущенная Ollama и установленная модель. ProfMate их не качает и не стартует. `MODEL_NAME` замени на имя модели.
+
+```sh
+export PROFMATE_MODEL='MODEL_NAME'
+export PROFMATE_AI_URL='http://127.0.0.1:11434'
+
+bin/profmate inspect http://localhost:6060 --duration 30s \
+  --goal 'Поиск тормозит под нагрузкой: с чего начать?'
+```
+
+```text
+profmate> Почему эта функция наверху?
+profmate> Эти выделения памяти означают утечку?
+profmate> Какой следующий эксперимент поможет проверить гипотезу?
+```
+
+`--model` и `--ai-url` перекрывают переменные. `PROFMATE_AI_KEY` — Bearer, если сервер его просит. Пример лежит в `.env.example`, сам `.env` не читается. Если модель не ответила, замер всё равно сохраняется.
+
+В запрос уходят метрики, выбранные стеки, вопрос и кусок истории. Исходники попадают туда только после `--source` или `/source`. Если Ollama не на localhost, это уедет на тот адрес. Ключ в отчёт не пишется.
+
+## Команды
+
+```sh
+bin/profmate inspect http://localhost:6060 --duration 30s --no-chat --offline
+
+bin/profmate inspect http://localhost:6060 --duration 30s \
+  --source ./cmd/demo --out ./profmate-runs/experiment
+
+bin/profmate report ./profmate-runs/experiment/SESSION_ID
+bin/profmate chat ./profmate-runs/experiment/SESSION_ID --offline
+```
+
+Адрес — корень сервера, каталог `/debug/pprof/` или конкретный профиль. Длительность CPU — целое число секунд от 1 до 300. `--out` это родительская папка, сессия создаётся внутри неё. По умолчанию `./profmate-runs/`. Если `--goal` не задан и чат не выключен, утилита спросит, что смотрим. Enter — общий разбор.
+
+Мерить лучше один процесс. Балансировщик может отдать начальный и конечный снимки с разных инстансов.
+
+| Команда | |
+| --- | --- |
+| обычный текст | вопрос |
+| `/help` | список команд |
+| `/help profiling` | как включить pprof, block и mutex |
+| `/top` | метрики и функции |
+| `/profiles` | что снялось, время, ошибки |
+| `/source ПУТЬ` | исходники той же версии, что в процессе |
+| `/code` | показать выбранные куски |
+| `/save` | записать отчёт и диалог |
+| `/exit` | сохранить и выйти |
+
+В raw-профиле есть символы, стеки и номера строк, текста файлов нет. Код приложения утилита не трогает.
+
+## Что в профилях
+
+CPU — сэмплы процессора за окно, не время HTTP-запроса и не всё ожидание сети. `flat` — вклад самой функции, `cum` — вместе с тем, что она вызвала. Cum разных строк складывать нельзя.
+
+`inuse_space` / `inuse_objects` — что удерживается в heap-снимке. `alloc_space` / `alloc_objects` лежат в том же профиле, отдельный `/allocs` не нужен. Разница alloc между снимками включает уже освобождённые объекты. Принудительный GC не вызывается. Два снимка памяти или горутин сами по себе не доказывают утечку.
+
+Goroutine — число и стеки в момент снимка.
+
+Block — записанные ожидания синхронизации. Mutex — конкуренция, стек обычно указывает на завершение секции (часто Unlock). Пустой block/mutex значит «событий не записано»: сбор мог быть выключен. Включать его надо в самом приложении через `runtime.SetBlockProfileRate` и `runtime.SetMutexProfileFraction`.
+
+Снимки снимаются по очереди, не одновременно, и их интервал не равен окну CPU. Факт, гипотеза и следующий шаг в отчёте разделены.
+
+## Что сохраняется
+
+```text
+profmate-runs/<session>/
+  session.json
+  report.md
+  chat.md
+  profiles/
+```
+
+Raw можно открыть через `go tool pprof`. Ошибка одного профиля не ломает остальные. Перед тем как выкладывать отчёт, глянь его: там имена функций и пути.
+
+## Сравнить демо
+
+Сними замер, останови демо и запусти вариант, где regexp компилируется один раз:
+
+```sh
+go run ./cmd/demo -optimized
+```
+
+Повтори ту же нагрузку и сохрани второй замер в другую папку. Сравни отчёты и цифры load руками. Насколько станет быстрее, зависит от машины. Команды diff двух сессий нет.
+
+```sh
+go run ./cmd/load -target 'http://127.0.0.1:8080/search?q=go' \
+  -duration 60s -workers 16
+```
+
+Только GET. Длительность до 10 минут, workers до 128, таймаут запроса 5 секунд, тело ответа до 1 MiB. Редиректы не хожу. Гонять только по адресу, на который можно создавать нагрузку. На выходе число успешных и неуспешных запросов, throughput и среднее время успешных. Процентилей нет.
+
+## Разработка
+
+```sh
+go test ./...
+go test -race ./...
+go vet ./...
+```
+
+Тесты гоняют сбор на подставном транспорте, разбор pprof, сессию, диалог, запросы к модели и хендлеры демо. Отдельный тест снимает настоящие cpu/heap/goroutine/block/mutex текущего процесса через `net/http/pprof`, без открытия порта. Живая Ollama для тестов не нужна.
+
+```text
+cmd/profmate/       CLI
+cmd/demo/           демо
+cmd/load/           нагрузка
+internal/collector/ HTTP-сбор
+internal/analyze/   метрики
+internal/assistant/ Ollama и офлайн-ответы
+internal/source/    куски исходников
+internal/render/    текст и markdown
+internal/store/     сессии на диске
+```
+
+В `go.mod` путь `github.com/profmate/profmate` — заготовка, это не опубликованный репозиторий. Если будешь выкладывать под своим аккаунтом, поменяй module path и импорты. Лицензия MIT.
+
+[net/http/pprof](https://pkg.go.dev/net/http/pprof), [runtime/pprof](https://pkg.go.dev/runtime/pprof), [google/pprof](https://github.com/google/pprof), [Ollama chat API](https://docs.ollama.com/api/chat).
