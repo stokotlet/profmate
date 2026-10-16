@@ -16,13 +16,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/profmate/profmate/internal/analyze"
-	"github.com/profmate/profmate/internal/assistant"
-	"github.com/profmate/profmate/internal/collector"
-	"github.com/profmate/profmate/internal/model"
-	"github.com/profmate/profmate/internal/render"
-	"github.com/profmate/profmate/internal/source"
-	"github.com/profmate/profmate/internal/store"
+	"github.com/stokotlet/profmate/internal/analyze"
+	"github.com/stokotlet/profmate/internal/assistant"
+	"github.com/stokotlet/profmate/internal/collector"
+	"github.com/stokotlet/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/render"
+	"github.com/stokotlet/profmate/internal/source"
+	"github.com/stokotlet/profmate/internal/store"
 )
 
 const Version = "0.1.0"

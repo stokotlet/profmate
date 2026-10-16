@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/google/pprof/profile"
-	"github.com/profmate/profmate/internal/model"
-	"github.com/profmate/profmate/internal/store"
-	"github.com/profmate/profmate/internal/testhttp"
+	"github.com/stokotlet/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/store"
+	"github.com/stokotlet/profmate/internal/testhttp"
 )
 
 func TestInspectChatSaveAndResume(t *testing.T) {

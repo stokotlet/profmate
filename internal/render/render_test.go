@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/profmate/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/model"
 )
 
 func TestConsoleShowsEmptyProfileCaveat(t *testing.T) {

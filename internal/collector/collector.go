@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/google/pprof/profile"
-	"github.com/profmate/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/model"
 )
 
 const maxBodyBytes = 32 << 20

@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/profmate/profmate/internal/app"
+	"github.com/stokotlet/profmate/internal/app"
 )
 
 func main() {

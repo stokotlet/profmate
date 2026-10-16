@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/profmate/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/model"
 )
 
 const maxContext = 32 << 10

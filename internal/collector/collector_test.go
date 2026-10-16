@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/google/pprof/profile"
-	"github.com/profmate/profmate/internal/testhttp"
+	"github.com/stokotlet/profmate/internal/testhttp"
 )
 
 func TestNormalizeURL(t *testing.T) {

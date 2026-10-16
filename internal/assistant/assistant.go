@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/profmate/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/model"
 )
 
 const (

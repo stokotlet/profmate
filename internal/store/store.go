@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/profmate/profmate/internal/model"
-	"github.com/profmate/profmate/internal/render"
+	"github.com/stokotlet/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/render"
 )
 
 func Save(dir string, s *model.Session) error {

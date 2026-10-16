@@ -158,6 +158,6 @@ internal/render/    текст и markdown
 internal/store/     сессии на диске
 ```
 
-В `go.mod` путь `github.com/profmate/profmate` — заготовка, это не опубликованный репозиторий. Если будешь выкладывать под своим аккаунтом, поменяй module path и импорты. Лицензия MIT.
+Module path — `github.com/stokotlet/profmate`. Лицензия MIT.
 
 [net/http/pprof](https://pkg.go.dev/net/http/pprof), [runtime/pprof](https://pkg.go.dev/runtime/pprof), [google/pprof](https://github.com/google/pprof), [Ollama chat API](https://docs.ollama.com/api/chat).

@@ -1,4 +1,4 @@
-module github.com/profmate/profmate
+module github.com/stokotlet/profmate
 
 go 1.24.0
 

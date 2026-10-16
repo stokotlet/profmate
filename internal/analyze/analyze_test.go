@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/google/pprof/profile"
-	"github.com/profmate/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/model"
 )
 
 func TestFunctionAggregationHandlesRecursionAndInlining(t *testing.T) {

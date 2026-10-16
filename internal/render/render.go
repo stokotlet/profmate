@@ -6,8 +6,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/profmate/profmate/internal/analyze"
-	"github.com/profmate/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/analyze"
+	"github.com/stokotlet/profmate/internal/model"
 )
 
 func Scope(scope string) string {

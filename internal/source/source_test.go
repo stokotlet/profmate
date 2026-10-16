@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/profmate/profmate/internal/model"
+	"github.com/stokotlet/profmate/internal/model"
 )
 
 func TestExtractOnlyMatchingCode(t *testing.T) {
